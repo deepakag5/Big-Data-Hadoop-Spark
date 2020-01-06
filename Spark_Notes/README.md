@@ -26,7 +26,7 @@ spark = SparkSession.builder.master("local").appName("Word Count")\.config("spar
 
 
 
-##The SparkConf
+#### The SparkConf
 
 The SparkConf manages all of our application configurations. You create one via the import
 statement, as shown in the example that follows. After you create it, the SparkConf is immutable for that specific Spark Application:
@@ -62,7 +62,7 @@ spark.conf.set("spark.sql.shuffle.partitions", "5")
 In Spark, the core data structures are immutable, meaning they cannot be changed after they’re
 created. This might seem like a strange concept at first: if you cannot change it, how are you supposed to use it? To “change” a DataFrame, you need to instruct Spark how you would like to modify it to do what you want. These instructions are called transformations.
 
-Narrow vs Wide Transformation
+**Narrow vs Wide Transformation**
 
 Transformations consisting of narrow dependencies (we’ll call them narrow transformations) are
 those for which each input partition will contribute to only one output partition. 
@@ -71,4 +71,25 @@ A wide dependency (or wide transformation) style transformation will have input 
 contributing to many output partitions. You will often hear this referred to as a shuffle whereby Spark will exchange partitions across the cluster. 
 
 With narrow transformations, Spark will automatically perform an operation called pipelining, meaning that if we specify multiple filters on DataFrames, they’ll all be performed in-memory. The same cannot be said for shuffles. When we perform a shuffle, Spark writes the results to disk.
+
+## Actions
+
+Transformations allow us to build up our logical transformation plan. To trigger the computation, we run an action. An action instructs Spark to compute a result from a series of transformations
+
+
+## DataFrames versus SQL versus Datasets versus RDDs
+
+This question also comes up frequently. The answer is simple. Across all languages, DataFrames, Datasets, and SQL are equivalent in speed. This means that if you’re using DataFrames in any of these languages, performance is equal. However, if you’re going to be defining UDFs, you’ll take a performance hit writing those in Python or R, and to some extent a lesser performance hit in Java and Scala. 
+
+If you want to optimize for pure performance, it would behoove you to try and get back to
+DataFrames and SQL as quickly as possible. Although all DataFrame, SQL, and Dataset code
+compiles down to RDDs, Spark’s optimization engine will write “better” RDD code than you can
+manually and certainly do it with orders of magnitude less effort. 
+Additionally, you will lose out on new optimizations that are added to Spark’s SQL engine every release.
+
+Lastly, if you want to use RDDs, we definitely recommend using Scala or Java. If that’s not possible, we recommend that you restrict the “surface area” of RDDs in your application to the bare minimum. That’s because when Python runs RDD code, it’s serializes a lot of data to and from the Python process. This is very expensive to run over very big data and can also decrease stability.
+
+Although it isn’t exactly relevant to performance tuning, it’s important to note that there are also some gaps in what functionality is supported in each of Spark’s languages
+
+
 
