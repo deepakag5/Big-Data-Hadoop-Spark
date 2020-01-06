@@ -15,52 +15,57 @@ The executors are responsible for actually carrying out the work that the driver
 
 The first step of any Spark Application is creating a SparkSession. In many interactive modes, this is done for you, but in an application, you must do it manually.
 
-// Creating a SparkSession in Scala
+**Creating a SparkSession in Scala**
+```
 import org.apache.spark.sql.SparkSession
 val spark = SparkSession.builder().appName("Databricks Spark Example").config("spark.sql.warehouse.dir", "/user/hive/warehouse").getOrCreate()
-
+```
 **Creating a SparkSession in Python**
-
+```
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.master("local").appName("Word Count")\.config("spark.some.config.option", "some-value")\.getOrCreate()
+```
 
 
-
-#### The SparkConf
+## The SparkConf
 
 The SparkConf manages all of our application configurations. You create one via the import
 statement, as shown in the example that follows. After you create it, the SparkConf is immutable for that specific Spark Application:
 
-// in Scala
-
+**in Scala**
+```
 import org.apache.spark.SparkConf
 val conf = new SparkConf().setMaster("local[2]").setAppName("DefinitiveGuide")
 .set("some.conf", "to.some.value")
-
-// in Python
-
+```
+**in Python**
+```
 from pyspark import SparkConf
 conf = SparkConf().setMaster("local[2]").setAppName("DefinitiveGuide")\
 .set("some.conf", "to.some.value")
 
 spark.conf.set("spark.sql.shuffle.partitions", 50)
 spark.conf.set(“spark.executor.memory”, “2g”)
-
+```
 
 
 ## Partitions
 
 To allow every executor to perform work in parallel, Spark breaks up the data into chunks called
 partitions. A partition is a collection of rows that sit on one physical machine in your cluster. A
-DataFrame’s partitions represent how the data is physically distributed across the cluster of machines during execution. If you have one partition, Spark will have a parallelism of only one, even if you have thousands of executors. If you have many partitions but only one executor, Spark will still have a parallelism of only one because there is only one computation resource
-
+DataFrame’s partitions represent how the data is physically distributed across the cluster of machines during execution. 
+If you have one partition, Spark will have a parallelism of only one, even if you have thousands of executors. 
+If you have many partitions but only one executor, Spark will still have a parallelism of only one because there is only one computation resource
+```
 spark.conf.set("spark.sql.shuffle.partitions", "5")
-
+```
 
 ## Transformations
 
 In Spark, the core data structures are immutable, meaning they cannot be changed after they’re
-created. This might seem like a strange concept at first: if you cannot change it, how are you supposed to use it? To “change” a DataFrame, you need to instruct Spark how you would like to modify it to do what you want. These instructions are called transformations.
+created. This might seem like a strange concept at first: if you cannot change it, how are you supposed to use it? 
+To “change” a DataFrame, you need to instruct Spark how you would like to modify it to do what you want. 
+These instructions are called transformations.
 
 **Narrow vs Wide Transformation**
 
@@ -70,16 +75,21 @@ those for which each input partition will contribute to only one output partitio
 A wide dependency (or wide transformation) style transformation will have input partitions
 contributing to many output partitions. You will often hear this referred to as a shuffle whereby Spark will exchange partitions across the cluster. 
 
-With narrow transformations, Spark will automatically perform an operation called pipelining, meaning that if we specify multiple filters on DataFrames, they’ll all be performed in-memory. The same cannot be said for shuffles. When we perform a shuffle, Spark writes the results to disk.
+With narrow transformations, Spark will automatically perform an operation called pipelining, meaning that if we 
+specify multiple filters on DataFrames, they’ll all be performed in-memory. The same cannot be said for shuffles. 
+When we perform a shuffle, Spark writes the results to disk.
 
 ## Actions
 
-Transformations allow us to build up our logical transformation plan. To trigger the computation, we run an action. An action instructs Spark to compute a result from a series of transformations
+Transformations allow us to build up our logical transformation plan. To trigger the computation, we run an action. 
+An action instructs Spark to compute a result from a series of transformations
 
 
 ## DataFrames versus SQL versus Datasets versus RDDs
 
-This question also comes up frequently. The answer is simple. Across all languages, DataFrames, Datasets, and SQL are equivalent in speed. This means that if you’re using DataFrames in any of these languages, performance is equal. However, if you’re going to be defining UDFs, you’ll take a performance hit writing those in Python or R, and to some extent a lesser performance hit in Java and Scala. 
+This question also comes up frequently. The answer is simple. Across all languages, DataFrames, Datasets, and SQL are equivalent 
+in speed. This means that if you’re using DataFrames in any of these languages, performance is equal. However, if you’re going to 
+be defining UDFs, you’ll take a performance hit writing those in Python or R, and to some extent a lesser performance hit in Java and Scala. 
 
 If you want to optimize for pure performance, it would behoove you to try and get back to
 DataFrames and SQL as quickly as possible. Although all DataFrame, SQL, and Dataset code
@@ -87,43 +97,69 @@ compiles down to RDDs, Spark’s optimization engine will write “better” RDD
 manually and certainly do it with orders of magnitude less effort. 
 Additionally, you will lose out on new optimizations that are added to Spark’s SQL engine every release.
 
-Lastly, if you want to use RDDs, we definitely recommend using Scala or Java. If that’s not possible, we recommend that you restrict the “surface area” of RDDs in your application to the bare minimum. That’s because when Python runs RDD code, it’s serializes a lot of data to and from the Python process. This is very expensive to run over very big data and can also decrease stability.
+Lastly, if you want to use RDDs, we definitely recommend using Scala or Java. If that’s not possible, we recommend that 
+you restrict the “surface area” of RDDs in your application to the bare minimum. That’s because when Python runs RDD code,
+ it’s serializes a lot of data to and from the Python process. This is very expensive to run over very big data and can also decrease stability.
 
-Although it isn’t exactly relevant to performance tuning, it’s important to note that there are also some gaps in what functionality is supported in each of Spark’s languages
+Although it isn’t exactly relevant to performance tuning, it’s important to note that there are also some gaps in what functionality 
+is supported in each of Spark’s languages
 
 
 ## User-Defined Functions
 
-One of the most powerful things that you can do in Spark is define your own functions. These user defined functions (UDFs) make it possible for you to write your own custom transformations using Python or Scala and even use external libraries. 
-Now that we’ve created these functions and tested them, we need to register them with Spark so that we can use them on all of our worker machines. Spark will serialize the function on the driver and transfer it over the network to all executor processes. This happens regardless of language.
+One of the most powerful things that you can do in Spark is define your own functions. These user defined functions (UDFs) make 
+it possible for you to write your own custom transformations using Python or Scala and even use external libraries. 
+Now that we’ve created these functions and tested them, we need to register them with Spark so that we can use them on all 
+of our worker machines. Spark will serialize the function on the driver and transfer it over the network to all executor processes. 
+This happens regardless of language.
 
 When you use the function, there are essentially two different things that occur. If the function is
-written in Scala or Java, you can use it within the Java Virtual Machine (JVM). This means that there will be little performance penalty aside from the fact that you can’t take advantage of code generation capabilities that Spark has for built-in functions. There can be performance issues if you create or use a lot of objects; we cover that in the section on optimization in Chapter 19.
+written in Scala or Java, you can use it within the Java Virtual Machine (JVM). This means that there will be little performance 
+penalty aside from the fact that you can’t take advantage of code generation capabilities that Spark has for built-in functions. 
+There can be performance issues if you create or use a lot of objects; we cover that in the section on optimization in Chapter 19.
+
 If the function is written in Python, something quite different happens. 
-Spark starts a Python process on the worker, serializes all of the data to a format that Python can understand (remember, it was in the JVM earlier), executes the function row by row on that data in the Python process, and then finally returns the results of the row operations to the JVM and Spark. 
+Spark starts a Python process on the worker, serializes all of the data to a format that Python can understand (remember, it was in the JVM earlier),
+ executes the function row by row on that data in the Python process, and then finally returns the results of the row operations to the JVM and Spark. 
 
 
-# Broadcast Variables (Immutable shared variable)
+## Broadcast Variables (Immutable shared variable)
 
-Broadcast variables are a way you can share an immutable value efficiently around the cluster without encapsulating that variable in a function closure. The normal way to use a variable in your driver node inside your tasks is to simply reference it in your function closures (e.g., in a map operation), but this can be inefficient, especially for large variables such as a lookup table or a machine learning model. The reason for this is that when you use a variable in a closure, it must be deserialized on the worker nodes many times (one per task). Moreover, if you use the same variable in multiple Spark actions and jobs, it will be re-sent to the workers with every job instead of once.
+Broadcast variables are a way you can share an immutable value efficiently around the cluster without encapsulating 
+that variable in a function closure. The normal way to use a variable in your driver node inside your tasks is to simply 
+reference it in your function closures (e.g., in a map operation), but this can be inefficient, especially for large variables 
+such as a lookup table or a machine learning model. The reason for this is that when you use a variable in a closure, it must be
+ deserialized on the worker nodes many times (one per task). Moreover, if you use the same variable in multiple Spark actions and jobs, 
+ it will be re-sent to the workers with every job instead of once.
 
-This is where broadcast variables come in. Broadcast variables are shared, immutable variables that are cached on every machine in the cluster instead of serialized with every single task. The canonical use case is to pass around a large lookup table that fits in memory on the executors and use that in a function
+This is where broadcast variables come in. Broadcast variables are shared, immutable variables that are cached on every machine in the 
+cluster instead of serialized with every single task. The canonical use case is to pass around a large lookup table that fits in memory 
+on the executors and use that in a function
 
 ## Accumulators (Mutable shared variable)
 
-Accumulators Spark’s second type of shared variable, are a way of updating a value inside of a variety of transformations and propagating that value to the driver node in an efficient and fault-tolerant way.
+Accumulators Spark’s second type of shared variable, are a way of updating a value inside of a variety of transformations 
+and propagating that value to the driver node in an efficient and fault-tolerant way.
 
-Accumulators provide a mutable variable that a Spark cluster can safely update on a per-row basis. You can use these for debugging purposes (say to track the values of a certain variable per partition in order to intelligently use it over time) or to create low-level aggregation. Accumulators are variables that are “added” to only through an associative and commutative operation and can therefore be efficiently supported in parallel. You can use them to implement counters (as in MapReduce) or sums.
+Accumulators provide a mutable variable that a Spark cluster can safely update on a per-row basis. You can use these for 
+debugging purposes (say to track the values of a certain variable per partition in order to intelligently use it over time) 
+or to create low-level aggregation. Accumulators are variables that are “added” to only through an associative and commutative 
+operation and can therefore be efficiently supported in parallel. You can use them to implement counters (as in MapReduce) or sums.
 
-Spark natively supports accumulators of numeric types, and programmers can add support for new types. For accumulator updates performed inside actions only, Spark guarantees that each task’s update to the accumulator will be applied only once, meaning that restarted tasks will not update the value. In transformations, you should be aware that each task’s update can be applied more than once if tasks or job stages are re-executed.
+Spark natively supports accumulators of numeric types, and programmers can add support for new types. For accumulator updates 
+performed inside actions only, Spark guarantees that each task’s update to the accumulator will be applied only once, meaning 
+that restarted tasks will not update the value. In transformations, you should be aware that each task’s update can be applied 
+more than once if tasks or job stages are re-executed.
 
-Accumulators do not change the lazy evaluation model of Spark. If an accumulator is being updated within an operation on an RDD, its value is updated only once that RDD is actually computed (e.g., when you call an action on that RDD or an RDD that depends on it). Consequently, accumulator updates are not guaranteed to be executed when made within a lazy transformation like map().
+Accumulators do not change the lazy evaluation model of Spark. If an accumulator is being updated within an operation on an RDD, 
+its value is updated only once that RDD is actually computed (e.g., when you call an action on that RDD or an RDD that depends on it). 
+Consequently, accumulator updates are not guaranteed to be executed when made within a lazy transformation like map().
 
 Accumulators can be both named and unnamed. Named accumulators will display their running
 results in the Spark UI, whereas unnamed ones will not
 
 
-## Debugging
+# Debugging
 
 **Spark Jobs Not Starting**
 
@@ -138,7 +174,11 @@ The Spark UI seems to be reporting incorrect information.
 *Potential treatments*
 ```
 This mostly occurs when your cluster or your application’s resource demands are not configured
-properly. Spark, in a distributed setting, does make some assumptions about networks, file systems, and other resources. During the process of setting up the cluster, you likely configured something incorrectly, and now the node that runs the driver cannot talk to the executors. This might be because you didn’t specify what IP and port is open or didn’t open the correct one. This is most likely a cluster level, machine, or configuration issue. Another option is that your application requested more resources per executor than your cluster manager currently has free, in which case the driver will be waiting forever for executors to be launched.
+properly. Spark, in a distributed setting, does make some assumptions about networks, file systems, and other resources. 
+During the process of setting up the cluster, you likely configured something incorrectly, and now the node that runs the 
+driver cannot talk to the executors. This might be because you didn’t specify what IP and port is open or didn’t open the correct one. 
+This is most likely a cluster level, machine, or configuration issue. Another option is that your application requested more resources
+per executor than your cluster manager currently has free, in which case the driver will be waiting forever for executors to be launched.
 
 Ensure that machines can communicate with one another on the ports that you expect. Ideally,
 you should open up all ports between the worker nodes unless you have more stringent
@@ -160,7 +200,9 @@ You check the Spark UI and no jobs, stages, or tasks seem to run.
 ```
 *Potential treatments*
 ```
-After checking and confirming that the Spark UI environment tab shows the correct information for your application, it’s worth double-checking your code. Many times, there might be a simple typo or incorrect column name that is preventing the Spark job from compiling into its underlying Spark plan (when using the DataFrame API).
+After checking and confirming that the Spark UI environment tab shows the correct information for your application, 
+it’s worth double-checking your code. Many times, there might be a simple typo or incorrect column name that is preventing 
+the Spark job from compiling into its underlying Spark plan (when using the DataFrame API).
 
 You should take a look at the error returned by Spark to confirm that there isn’t an issue in
 your code, such as providing the wrong input file path or field name.
@@ -174,7 +216,8 @@ smaller version that reproduces the issue (e.g., just reading one dataset).
 **Errors During Execution**
 
 This kind of issue occurs when you already are working on a cluster or parts of your Spark
-Application run before you encounter an error. This can be a part of a scheduled job that runs at some interval or a part of some interactive exploration that seems to fail after some time.
+Application run before you encounter an error. This can be a part of a scheduled job that runs at some interval or a
+part of some interactive exploration that seems to fail after some time.
 
 *Signs and symptoms*
 ```
@@ -214,7 +257,8 @@ record was being processed.
 
 **Slow Tasks or Stragglers**
 
-This issue is quite common when optimizing applications, and can occur either due to work not being evenly distributed across your machines (“skew”), or due to one of your machines being slower than the others (e.g., due to a hardware problem).
+This issue is quite common when optimizing applications, and can occur either due to work not being evenly distributed across your 
+machines (“skew”), or due to one of your machines being slower than the others (e.g., due to a hardware problem).
 
 *Signs and symptoms*
 
@@ -273,7 +317,9 @@ perform a lot of object instantiation to convert records to Java objects for UDF
 cause a lot of garbage collection. If you’re using Datasets, look at the garbage collection
 metrics in the Spark UI to see if they’re consistent with the slow tasks.
 
-Stragglers can be one of the most difficult issues to debug, simply because there are so many possible causes. However, in all likelihood, the cause will be some kind of data skew, so definitely begin by checking the Spark UI for imbalanced amounts of data across tasks.
+Stragglers can be one of the most difficult issues to debug, simply because there are so many possible causes. However, 
+in all likelihood, the cause will be some kind of data skew, so definitely begin by checking the Spark UI for imbalanced 
+amounts of data across tasks.
 ```
 
 
@@ -385,7 +431,8 @@ Spark UI. We’ll talk about locality a bit more in the next chapter.
 
 **Driver OutOfMemoryError or Driver Unresponsive**
 
-This is usually a pretty serious issue because it will crash your Spark Application. It often happens due to collecting too much data back to the driver, making it run out of memory.
+This is usually a pretty serious issue because it will crash your Spark Application. It often happens due to collecting too 
+much data back to the driver, making it run out of memory.
 
 *Signs and symptoms*
 ```
@@ -538,13 +585,22 @@ same scope as closure and use those.
 
 **Scala versus Java versus Python versus R**
 
-This question is nearly impossible to answer in the general sense because a lot will depend on your use case. For instance, if you want to perform some single-node machine learning after performing a large ETL job, we might recommend running your Extract, Transform, and Load (ETL) code as SparkR code and then using R’s massive machine learning ecosystem to run your single-node machine learning algorithms. This gives you the best of both worlds and takes advantage of the strength of R as well as the strength of Spark without sacrifices. 
+This question is nearly impossible to answer in the general sense because a lot will depend on your use case. For instance, 
+if you want to perform some single-node machine learning after performing a large ETL job, we might recommend running your 
+Extract, Transform, and Load (ETL) code as SparkR code and then using R’s massive machine learning ecosystem to run your 
+single-node machine learning algorithms. This gives you the best of both worlds and takes advantage of the strength of R as well 
+as the strength of Spark without sacrifices. 
 
-As we mentioned numerous times, Spark’s Structured APIs are consistent across languages in terms of speed and stability. That means that you should code with whatever language you are most comfortable using or is best suited for your use case.
+As we mentioned numerous times, Spark’s Structured APIs are consistent across languages in terms of speed and stability. 
+That means that you should code with whatever language you are most comfortable using or is best suited for your use case.
 
-Things do get a bit more complicated when you need to include custom transformations that cannot be created in the Structured APIs. These might manifest themselves as RDD transformations or user defined functions (UDFs). If you’re going to do this, R and Python are not necessarily the best choice simply because of how this is actually executed. It’s also more difficult to provide stricter guarantees of types and manipulations when you’re defining functions that jump across languages. 
+Things do get a bit more complicated when you need to include custom transformations that cannot be created in the Structured APIs. 
+These might manifest themselves as RDD transformations or user defined functions (UDFs). If you’re going to do this, R and Python are 
+not necessarily the best choice simply because of how this is actually executed. It’s also more difficult to provide stricter guarantees of 
+types and manipulations when you’re defining functions that jump across languages. 
 
-We find that using Python for the majority of the application, and porting some of it to Scala or writing specific UDFs in Scala as your application evolves, is a powerful technique—it allows for a nice balance between overall usability, maintainability, and performance.
+We find that using Python for the majority of the application, and porting some of it to Scala or writing specific UDFs in Scala 
+as your application evolves, is a powerful technique—it allows for a nice balance between overall usability, maintainability, and performance.
 
 
 
