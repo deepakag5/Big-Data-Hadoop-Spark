@@ -129,14 +129,14 @@ results in the Spark UI, whereas unnamed ones will not
 
 This issue can arise frequently, especially when you’re just getting started with a fresh deployment or environment.
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 Spark jobs don’t start.
 The Spark UI doesn’t show any nodes on the cluster except the driver.
 The Spark UI seems to be reporting incorrect information.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 This mostly occurs when your cluster or your application’s resource demands are not configured
 properly. Spark, in a distributed setting, does make some assumptions about networks, file systems, and other resources. During the process of setting up the cluster, you likely configured something incorrectly, and now the node that runs the driver cannot talk to the executors. This might be because you didn’t specify what IP and port is open or didn’t open the correct one. This is most likely a cluster level, machine, or configuration issue. Another option is that your application requested more resources per executor than your cluster manager currently has free, in which case the driver will be waiting forever for executors to be launched.
 
@@ -148,18 +148,18 @@ Ensure that your Spark resource configurations are correct and that your cluster
 properly set up for Spark. Try running a simple application first to see if that works. One
 common issue may be that you requested more memory per executor than the cluster manager
 has free to allocate, so check how much it is reporting free (in its UI) and your sparksubmit memory configuration.
-
+```
 **Errors Before Execution** 
 
 This can happen when you’re developing a new application and have previously run code on this cluster, but now some new code won’t work.
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 Commands don’t run at all and output large error messages.
 You check the Spark UI and no jobs, stages, or tasks seem to run.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 After checking and confirming that the Spark UI environment tab shows the correct information for your application, it’s worth double-checking your code. Many times, there might be a simple typo or incorrect column name that is preventing the Spark job from compiling into its underlying Spark plan (when using the DataFrame API).
 
 You should take a look at the error returned by Spark to confirm that there isn’t an issue in
@@ -170,20 +170,21 @@ your driver, your workers, and the storage system you are using.
 There might be issues with libraries or classpaths that are causing the wrong version of a
 library to be loaded for accessing storage. Try simplifying your application until you get a
 smaller version that reproduces the issue (e.g., just reading one dataset).
-
+```
 **Errors During Execution**
 
 This kind of issue occurs when you already are working on a cluster or parts of your Spark
 Application run before you encounter an error. This can be a part of a scheduled job that runs at some interval or a part of some interactive exploration that seems to fail after some time.
 
-Signs and symptoms
+*Signs and symptoms*
+```
 One Spark job runs successfully on the entire cluster but the next one fails.
 A step in a multistep query fails.
 A scheduled job that ran yesterday is failing today.
 Difficult to parse error message.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 Check to see if your data exists or is in the format that you expect. This can change over time
 or some upstream change may have had unintended consequences on your application.
 If an error quickly pops up when you run a query (i.e., before tasks are launched), it is most
@@ -209,27 +210,34 @@ will show you the exception thrown by your code. In this case, you will see a ta
 “failed” on the Spark UI, and you can also view the logs on that machine to understand what
 it was doing when it failed. Try adding more logs inside your code to figure out which data
 record was being processed.
+```
 
 **Slow Tasks or Stragglers**
 
 This issue is quite common when optimizing applications, and can occur either due to work not being evenly distributed across your machines (“skew”), or due to one of your machines being slower than the others (e.g., due to a hardware problem).
 
-Signs and symptoms
+*Signs and symptoms*
 
 Any of the following are appropriate symptoms of the issue:
+```
 Spark stages seem to execute until there are only a handful of tasks left. Those tasks then take
 a long time.
+
 These slow tasks show up in the Spark UI and occur consistently on the same dataset(s).
-These occur in stages, one after the other.
-Scaling up the number of machines given to the Spark Application doesn’t really help—some
+
+These occur in stages, one after the other. Scaling up the number of machines given to the Spark Application doesn’t really help—some
 tasks still take much longer than others.
+
 In the Spark metrics, certain executors are reading and writing much more data than others.
-
-Potential treatments
-
-Slow tasks are often called “stragglers.” There are many reasons they may occur, but most often the source of this issue is that your data is partitioned unevenly into DataFrame or RDD partitions. When this happens, some executors might need to work on much larger amounts of work than others. One particularly common case is that you use a group-by-key operation and one of the keys just has more data than others. In this case, when you look at the Spark UI, you might see that the shuffle data for some nodes is much larger than for others.
-
-
+```
+*Potential treatments*
+```
+Slow tasks are often called “stragglers.” There are many reasons they may occur, but most 
+often the source of this issue is that your data is partitioned unevenly into DataFrame or 
+RDD partitions. When this happens, some executors might need to work on much larger amounts of work 
+than others. One particularly common case is that you use a group-by-key operation and one of the keys just
+has more data than others. In this case, when you look at the Spark UI, you might see that the shuffle data for 
+some nodes is much larger than for others.
 
 Try increasing the number of partitions to have less data per partition.
 
@@ -266,7 +274,7 @@ cause a lot of garbage collection. If you’re using Datasets, look at the garba
 metrics in the Spark UI to see if they’re consistent with the slow tasks.
 
 Stragglers can be one of the most difficult issues to debug, simply because there are so many possible causes. However, in all likelihood, the cause will be some kind of data skew, so definitely begin by checking the Spark UI for imbalanced amounts of data across tasks.
-
+```
 
 
 **Slow Aggregations**
@@ -274,13 +282,14 @@ Stragglers can be one of the most difficult issues to debug, simply because ther
 If you have a slow aggregation, start by reviewing the issues in the “Slow Tasks” section before
 proceeding. Having tried those, you might continue to see the same problem.
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 Slow tasks during a groupBy call.
 Jobs after the aggregation are slow, as well.
+```
 
-Potential treatments
-
+*Potential treatments*
+```
 Unfortunately, this issue can’t always be solved. Sometimes, the data in your job just has some
 skewed keys, and the operation you want to run on them needs to be slow.
 Increasing the number of partitions, prior to an aggregation, might help by reducing the
@@ -306,20 +315,21 @@ Some aggregation functions are also just inherently slower than others. For inst
 collect_list and collect_set are very slow aggregation functions because they must
 return all the matching objects to the driver, and should be avoided in performance-critical
 code.
-
+```
 
 
 **Slow Joins**
 
 Joins and aggregations are both shuffles, so they share some of the same general symptoms as well as treatments.
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 A join stage seems to be taking a long time. This can be one task or many tasks.
 Stages before and after the join seem to be operating normally.
+```
 
-Potential treatments
-
+*Potential treatments*
+```
 Many joins can be optimized (manually or automatically) to other types of joins. We covered
 how to select different join types in Chapter 8.
 
@@ -343,20 +353,20 @@ Sometimes Spark can’t properly plan for a broadcast join if it doesn’t know 
 about the input DataFrame or table. If you know that one of the tables that you are joining is
 small, you can try to force a broadcast , or use Spark’s statistics
 collection commands to let it analyze the table.
-
+```
 
 
 **Slow Reads and Writes**
 
 Slow I/O can be difficult to diagnose, especially with networked file systems.
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 Slow reading of data from a distributed file system or external system.
 Slow writes from network file systems or blob storage.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 Turning on speculation (set spark.speculation to true) can help with slow reads and
 writes. This will launch additional tasks with the same operation in an attempt to see
 whether it’s just some transient issue in the first task. Speculation is a powerful tool and
@@ -371,14 +381,14 @@ For distributed file systems such as HDFS running on the same nodes as Spark, ma
 Spark sees the same hostnames for nodes as the file system. This will enable Spark to do
 locality-aware scheduling, which you will be able to see in the “locality” column in the
 Spark UI. We’ll talk about locality a bit more in the next chapter.
-
+```
 
 **Driver OutOfMemoryError or Driver Unresponsive**
 
 This is usually a pretty serious issue because it will crash your Spark Application. It often happens due to collecting too much data back to the driver, making it run out of memory.
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 Spark Application is unresponsive or crashed.
 
 OutOfMemoryErrors or garbage collection messages in the driver logs.
@@ -388,9 +398,9 @@ Commands take a very long time to run or don’t run at all.
 Interactivity is very low or non-existent.
 
 Memory usage is high for the driver JVM.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 There are a variety of potential reasons for this happening, and diagnosis is not always
 straightforward.
 
@@ -416,22 +426,22 @@ If you are sharing a SparkContext with other users (e.g., through the SQL JDBC s
 some notebook environments), ensure that people aren’t trying to do something that might be
 causing large amounts of memory allocation in the driver (like working overly large arrays
 in their code or collecting large datasets).
-
+```
 **Executor OutOfMemoryError or Executor Unresponsive**
 
 Spark applications can sometimes recover from this automatically, depending on the true underlying issue.
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 OutOfMemoryErrors or garbage collection messages in the executor logs. You can find these
 in the Spark UI.
 
 Executors that crash or become unresponsive.
 
 Slow tasks on certain nodes that never seem to recover.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 Try increasing the memory available to executors and the number of executors.
 
 Try increasing PySpark worker size via the relevant Python configurations.
@@ -452,17 +462,17 @@ executors, and see which classes are taking up the most space.
 
 If executors are being placed on nodes that also have other workloads running on them, such
 as a key-value store, try to isolate your Spark jobs from other jobs.
-
+```
 **Unexpected Nulls in Results**
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 Unexpected null values after transformations.
 Scheduled production jobs that used to work no longer work, or no longer produce the right
 results.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 It’s possible that your data format has changed without adjusting your business logic. This
 means that code that worked before is no longer valid.
 
@@ -480,15 +490,15 @@ expression SELECT 5*"23" results in 115 because the string “25” converts to 
 empty string to an integer gives null. Make sure that your intermediate datasets have the
 schema you expect them to (try using printSchema on them), and look for any CAST
 operations in the final query plan.
-
+```
 **No Space Left on Disk Errors**
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 You see “no space left on disk” errors and your jobs fail.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 The easiest way to alleviate this, of course, is to add more disk space. You can do this by
 sizing up the nodes that you’re working on or attaching external storage in a cloud
 environment.
@@ -503,15 +513,15 @@ more information, see the Spark executor logs rolling configurations in Chapter 
 Try manually removing some old log files or old shuffle files from the machine(s) in
 question. This can help alleviate some of the issue although obviously it’s not a permanent
 fix.
-
+```
 **Serialization Errors**
 
-Signs and symptoms
-
+*Signs and symptoms*
+```
 You see serialization errors and your jobs fail.
-
-Potential treatments
-
+```
+*Potential treatments*
+```
 This is very uncommon when working with the Structured APIs, but you might be trying to
 perform some custom logic on executors with UDFs or RDDs and either the task that you’re
 trying to serialize to these executors or the data you are trying to share cannot be serialized.
@@ -523,7 +533,7 @@ Try not to refer to any fields of the enclosing object in your UDFs when creatin
 inside a Java or Scala class. This can cause Spark to try to serialize the whole enclosing
 object, which may not be possible. Instead, copy the relevant fields to local variables in the
 same scope as closure and use those.
-
+```
  
 
 **Scala versus Java versus Python versus R**
