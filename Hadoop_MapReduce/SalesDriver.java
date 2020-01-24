@@ -26,7 +26,8 @@ public class SalesDriver {
 		job_conf.setOutputFormat(TextOutputFormat.class);
 
 		// Set input and output directories using command line arguments,
-		//arg[0] = name of input directory on HDFS, and arg[1] =  name of output directory to be created to store the output file.
+		//arg[0] = name of input directory on HDFS,
+		//and arg[1] =  name of output directory to be created to store the output file.
 
 		FileInputFormat.setInputPaths(job_conf, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job_conf, new Path(args[1]));
